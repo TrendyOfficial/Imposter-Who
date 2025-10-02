@@ -17,10 +17,19 @@ export interface Category {
   isDefault?: boolean;
 }
 
+export type GameMode = 
+  | 'normal'
+  | 'everyone-imposter'
+  | 'innocents-see-hint'
+  | 'roles-switched'
+  | 'two-words'
+  | 'jester';
+
 export interface GameSettings {
   theme: 'light' | 'dark';
   language: 'nl';
-  trollMode: boolean;
+  gameModes: GameMode[];
+  randomizeGameModes: boolean;
   timerEnabled: boolean;
   timerLength: number;
   numberOfImposters: number;
@@ -31,7 +40,11 @@ export interface GameState {
   phase: 'lobby' | 'viewing-cards' | 'discussion' | 'voting' | 'results';
   currentPlayerIndex: number;
   selectedWord: string;
+  selectedWord2?: string;
   selectedHint: string;
+  selectedHint2?: string;
   imposters: string[];
+  jesterId?: string;
+  activeGameMode: GameMode;
   votes: Record<string, string>;
 }

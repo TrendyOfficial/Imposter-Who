@@ -7,10 +7,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Checkbox } from "@/components/ui/checkbox";
 import { GameCard } from "@/components/GameCard";
 import { defaultCategories } from "@/data/categories";
-import { Player, GameSettings, GameState, Category } from "@/types/game";
+import { Player, GameSettings, GameState, Category, GameMode } from "@/types/game";
 import { Moon, Sun, Plus, X, Eye, Settings as SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const HINT_PASSWORD = "8813";
+
+const gameModeLabels: Record<GameMode, string> = {
+  'normal': '🎯 Normal',
+  'everyone-imposter': '👻 Everyone Imposter',
+  'innocents-see-hint': '👁️ Innocents See Hint',
+  'roles-switched': '🔄 Roles Switched',
+  'two-words': '✌️ Two Words',
+  'jester': '🃏 Jester Mode (4+ spelers)',
+};
 
 const Index = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -25,7 +36,8 @@ const Index = () => {
   const [settings, setSettings] = useState<GameSettings>({
     theme: 'light',
     language: 'nl',
-    trollMode: false,
+    gameModes: ['normal'],
+    randomizeGameModes: false,
     timerEnabled: false,
     timerLength: 300,
     numberOfImposters: 1,
@@ -37,11 +49,14 @@ const Index = () => {
     selectedWord: '',
     selectedHint: '',
     imposters: [],
+    activeGameMode: 'normal',
     votes: {},
   });
   const [cardFlipped, setCardFlipped] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
+  const [hintPassword, setHintPassword] = useState("");
+  const [hintUnlocked, setHintUnlocked] = useState(false);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -85,6 +100,15 @@ const Index = () => {
     );
   };
 
+  const toggleGameMode = (mode: GameMode) => {
+    setSettings(prev => ({
+      ...prev,
+      gameModes: prev.gameModes.includes(mode)
+        ? prev.gameModes.filter(m => m !== mode)
+        : [...prev.gameModes, mode]
+    }));
+  };
+
   const startGame = () => {
     if (selectedCategories.length === 0) {
       toast.error("Selecteer minimaal 1 categorie!");
@@ -96,38 +120,75 @@ const Index = () => {
       return;
     }
 
+    if (settings.gameModes.length === 0) {
+      toast.error("Selecteer minimaal 1 game mode!");
+      return;
+    }
+
+    // Select active game mode
+    const activeMode = settings.randomizeGameModes
+      ? settings.gameModes[Math.floor(Math.random() * settings.gameModes.length)]
+      : settings.gameModes[0];
+
+    // Check jester mode player requirement
+    if (activeMode === 'jester' && players.length < 4) {
+      toast.error("Jester mode vereist minimaal 4 spelers!");
+      return;
+    }
+
     // Gather all words from selected categories
     const allWords = defaultCategories
       .filter(cat => selectedCategories.includes(cat.name))
       .flatMap(cat => cat.words);
 
-    // Pick random word
+    // Pick random word(s)
     const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+    let randomWord2;
+    if (activeMode === 'two-words') {
+      randomWord2 = allWords[Math.floor(Math.random() * allWords.length)];
+    }
 
-    // Assign imposters randomly
     const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
-    const imposterIds = shuffledPlayers
-      .slice(0, settings.numberOfImposters)
-      .map(p => p.id);
+    let imposterIds: string[] = [];
+    let jesterId: string | undefined;
 
-    // Update players with imposter status
+    // Handle different game modes
+    switch (activeMode) {
+      case 'everyone-imposter':
+        imposterIds = players.map(p => p.id);
+        break;
+      case 'jester':
+        jesterId = shuffledPlayers[0].id;
+        imposterIds = shuffledPlayers.slice(1, 1 + settings.numberOfImposters).map(p => p.id);
+        break;
+      default:
+        imposterIds = shuffledPlayers.slice(0, settings.numberOfImposters).map(p => p.id);
+    }
+
+    // Update players with roles
     const updatedPlayers = players.map(p => ({
       ...p,
-      isImposter: imposterIds.includes(p.id),
+      isImposter: activeMode === 'roles-switched' 
+        ? !imposterIds.includes(p.id) && p.id !== jesterId
+        : imposterIds.includes(p.id),
     }));
     setPlayers(updatedPlayers);
 
     setGameState({
       phase: 'viewing-cards',
       currentPlayerIndex: 0,
-      selectedWord: randomWord.word,
-      selectedHint: settings.hintEnabled ? randomWord.hint : '',
+      selectedWord: activeMode === 'roles-switched' ? randomWord.hint : randomWord.word,
+      selectedWord2: randomWord2?.word,
+      selectedHint: settings.hintEnabled ? (activeMode === 'roles-switched' ? randomWord.word : randomWord.hint) : '',
+      selectedHint2: randomWord2?.hint,
       imposters: imposterIds,
+      jesterId,
+      activeGameMode: activeMode,
       votes: {},
     });
 
     setCardFlipped(false);
-    toast.success("Spel gestart! Laat elke speler hun kaart bekijken.");
+    toast.success(`Spel gestart! Mode: ${gameModeLabels[activeMode]}`);
   };
 
   const nextPlayer = () => {
@@ -169,6 +230,7 @@ const Index = () => {
       selectedWord: '',
       selectedHint: '',
       imposters: [],
+      activeGameMode: 'normal',
       votes: {},
     });
     setCardFlipped(false);
@@ -227,72 +289,101 @@ const Index = () => {
                 <SettingsIcon className="h-6 w-6" />
                 Instellingen
               </h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="troll-mode">Troll Mode</Label>
-                  <Switch
-                    id="troll-mode"
-                    checked={settings.trollMode}
-                    onCheckedChange={(checked) => 
-                      setSettings(prev => ({ ...prev, trollMode: checked }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="timer">Timer</Label>
-                  <Switch
-                    id="timer"
-                    checked={settings.timerEnabled}
-                    onCheckedChange={(checked) =>
-                      setSettings(prev => ({ ...prev, timerEnabled: checked }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="hints">Hints</Label>
-                  <Switch
-                    id="hints"
-                    checked={settings.hintEnabled}
-                    onCheckedChange={(checked) =>
-                      setSettings(prev => ({ ...prev, hintEnabled: checked }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="imposters">Aantal Imposters: {settings.numberOfImposters}</Label>
-                  <Input
-                    id="imposters"
-                    type="number"
-                    min="1"
-                    max={Math.max(1, players.length - 1)}
-                    value={settings.numberOfImposters}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        numberOfImposters: parseInt(e.target.value) || 1,
-                      }))
-                    }
-                  />
-                </div>
-                {settings.timerEnabled && (
+              <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="timer">Timer</Label>
+                    <Switch
+                      id="timer"
+                      checked={settings.timerEnabled}
+                      onCheckedChange={(checked) =>
+                        setSettings(prev => ({ ...prev, timerEnabled: checked }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="hints">Hints</Label>
+                    <Switch
+                      id="hints"
+                      checked={settings.hintEnabled}
+                      onCheckedChange={(checked) =>
+                        setSettings(prev => ({ ...prev, hintEnabled: checked }))
+                      }
+                    />
+                  </div>
                   <div className="space-y-2">
-                    <Label htmlFor="timer-length">Timer Lengte (seconden): {settings.timerLength}</Label>
+                    <Label htmlFor="imposters">Aantal Imposters: {settings.numberOfImposters}</Label>
                     <Input
-                      id="timer-length"
+                      id="imposters"
                       type="number"
-                      min="30"
-                      max="900"
-                      step="30"
-                      value={settings.timerLength}
+                      min="1"
+                      max={Math.max(1, players.length - 1)}
+                      value={settings.numberOfImposters}
                       onChange={(e) =>
                         setSettings(prev => ({
                           ...prev,
-                          timerLength: parseInt(e.target.value) || 300,
+                          numberOfImposters: parseInt(e.target.value) || 1,
                         }))
                       }
                     />
                   </div>
-                )}
+                  {settings.timerEnabled && (
+                    <div className="space-y-2">
+                      <Label htmlFor="timer-length">Timer Lengte (seconden): {settings.timerLength}</Label>
+                      <Input
+                        id="timer-length"
+                        type="number"
+                        min="30"
+                        max="900"
+                        step="30"
+                        value={settings.timerLength}
+                        onChange={(e) =>
+                          setSettings(prev => ({
+                            ...prev,
+                            timerLength: parseInt(e.target.value) || 300,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Game Modes */}
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-lg font-semibold">🎮 Game Modes</Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="randomize" className="text-sm">Randomize</Label>
+                      <Switch
+                        id="randomize"
+                        checked={settings.randomizeGameModes}
+                        onCheckedChange={(checked) =>
+                          setSettings(prev => ({ ...prev, randomizeGameModes: checked }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-3">
+                    {(Object.keys(gameModeLabels) as GameMode[]).map((mode) => (
+                      <div
+                        key={mode}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer",
+                          settings.gameModes.includes(mode)
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-muted/30 hover:bg-muted/50"
+                        )}
+                        onClick={() => toggleGameMode(mode)}
+                      >
+                        <Checkbox
+                          checked={settings.gameModes.includes(mode)}
+                          onCheckedChange={() => toggleGameMode(mode)}
+                        />
+                        <span className="font-medium flex-1">{gameModeLabels[mode]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -402,37 +493,68 @@ const Index = () => {
                     <DialogHeader>
                       <DialogTitle>Woorden per Categorie</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 overflow-y-auto max-h-[60vh]">
-                      {defaultCategories.map((category) => (
-                        <div key={category.name} className="space-y-2">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left"
-                            onClick={() => setViewingCategory(
-                              viewingCategory?.name === category.name ? null : category
-                            )}
-                          >
-                            <span className="mr-2">{category.emoji}</span>
-                            {category.name}
-                          </Button>
-                          {viewingCategory?.name === category.name && (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-4 animate-accordion-down">
-                              {category.words.map((word, idx) => (
-                                <div
-                                  key={idx}
-                                  className="p-3 bg-muted rounded-lg text-sm"
-                                >
-                                  <div className="font-medium">{word.word}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Hint: {word.hint}
+                    {!hintUnlocked ? (
+                      <div className="space-y-4 p-6">
+                        <p className="text-muted-foreground">Voer de code in om hints te bekijken:</p>
+                        <Input
+                          type="password"
+                          placeholder="Code"
+                          value={hintPassword}
+                          onChange={(e) => setHintPassword(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && hintPassword === HINT_PASSWORD) {
+                              setHintUnlocked(true);
+                              toast.success("Hints ontgrendeld!");
+                            }
+                          }}
+                        />
+                        <Button
+                          onClick={() => {
+                            if (hintPassword === HINT_PASSWORD) {
+                              setHintUnlocked(true);
+                              toast.success("Hints ontgrendeld!");
+                            } else {
+                              toast.error("Onjuiste code!");
+                            }
+                          }}
+                          className="w-full"
+                        >
+                          Ontgrendelen
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+                        {defaultCategories.map((category) => (
+                          <div key={category.name} className="space-y-2">
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start text-left"
+                              onClick={() => setViewingCategory(
+                                viewingCategory?.name === category.name ? null : category
+                              )}
+                            >
+                              <span className="mr-2">{category.emoji}</span>
+                              {category.name}
+                            </Button>
+                            {viewingCategory?.name === category.name && (
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-4 animate-accordion-down">
+                                {category.words.map((word, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="p-3 bg-muted rounded-lg text-sm"
+                                  >
+                                    <div className="font-medium">{word.word}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Hint: {word.hint}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </DialogContent>
                 </Dialog>
               </div>
@@ -474,8 +596,11 @@ const Index = () => {
           <div className="space-y-6 animate-scale-in">
             <GameCard
               content={gameState.selectedWord}
+              content2={gameState.selectedWord2}
               hint={gameState.selectedHint}
               isImposter={currentPlayer.isImposter || false}
+              isJester={currentPlayer.id === gameState.jesterId}
+              showHintToInnocents={gameState.activeGameMode === 'innocents-see-hint'}
               onFlipComplete={() => setCardFlipped(true)}
               playerName={currentPlayer.name}
             />
@@ -544,7 +669,20 @@ const Index = () => {
                 <div className="p-4 bg-primary/10 rounded-xl">
                   <p className="text-sm text-muted-foreground mb-1">Het woord was:</p>
                   <p className="text-3xl font-bold text-foreground">{gameState.selectedWord}</p>
+                  {gameState.selectedWord2 && (
+                    <p className="text-2xl font-bold text-foreground mt-2">{gameState.selectedWord2}</p>
+                  )}
                 </div>
+
+                {gameState.selectedHint && (
+                  <div className="p-4 bg-secondary/10 rounded-xl">
+                    <p className="text-sm text-muted-foreground mb-1">De hint was:</p>
+                    <p className="text-2xl font-bold text-foreground">{gameState.selectedHint}</p>
+                    {gameState.selectedHint2 && (
+                      <p className="text-xl font-bold text-foreground mt-2">{gameState.selectedHint2}</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="p-4 bg-destructive/10 rounded-xl">
                   <p className="text-sm text-muted-foreground mb-2">De Imposter(s):</p>
@@ -561,6 +699,26 @@ const Index = () => {
                         </div>
                       ))}
                   </div>
+                </div>
+
+                {gameState.jesterId && (
+                  <div className="p-4 bg-warning/10 rounded-xl">
+                    <p className="text-sm text-muted-foreground mb-2">De Jester was:</p>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: players.find(p => p.id === gameState.jesterId)?.color }}
+                      />
+                      <span className="text-xl font-bold">
+                        {players.find(p => p.id === gameState.jesterId)?.name}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-4 bg-muted/50 rounded-xl">
+                  <p className="text-sm text-muted-foreground mb-1">Game Mode:</p>
+                  <p className="text-lg font-bold">{gameModeLabels[gameState.activeGameMode]}</p>
                 </div>
               </div>
 

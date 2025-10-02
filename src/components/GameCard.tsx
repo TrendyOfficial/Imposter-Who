@@ -3,13 +3,16 @@ import { cn } from "@/lib/utils";
 
 interface GameCardProps {
   content: string;
+  content2?: string;
   hint?: string;
   isImposter: boolean;
+  isJester?: boolean;
+  showHintToInnocents?: boolean;
   onFlipComplete: () => void;
   playerName: string;
 }
 
-export const GameCard = ({ content, hint, isImposter, onFlipComplete, playerName }: GameCardProps) => {
+export const GameCard = ({ content, content2, hint, isImposter, isJester, showHintToInnocents, onFlipComplete, playerName }: GameCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [wasFlipped, setWasFlipped] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -88,7 +91,21 @@ export const GameCard = ({ content, hint, isImposter, onFlipComplete, playerName
             }}
           >
             <div className="text-center space-y-6">
-              {isImposter ? (
+              {isJester ? (
+                <>
+                  <div className="text-6xl animate-pulse-glow">🃏</div>
+                  <div className="space-y-3">
+                    <h3 className="text-4xl font-bold text-warning">JESTER</h3>
+                    <p className="text-lg text-muted-foreground">Zorg dat je wordt uitgestemd!</p>
+                    {hint && (
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <p className="text-sm text-muted-foreground mb-1">Hint:</p>
+                        <p className="text-2xl font-semibold text-foreground">{hint}</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : isImposter ? (
                 <>
                   <div className="text-6xl animate-pulse-glow">👻</div>
                   <div className="space-y-3">
@@ -107,8 +124,11 @@ export const GameCard = ({ content, hint, isImposter, onFlipComplete, playerName
                   <div className="space-y-3">
                     <div className="bg-primary/10 rounded-lg p-6">
                       <p className="text-3xl font-bold text-foreground">{content}</p>
+                      {content2 && (
+                        <p className="text-2xl font-bold text-foreground mt-2">{content2}</p>
+                      )}
                     </div>
-                    {hint && (
+                    {hint && showHintToInnocents && (
                       <div className="bg-muted/50 rounded-lg p-4">
                         <p className="text-sm text-muted-foreground mb-1">Hint:</p>
                         <p className="text-xl font-semibold text-foreground">{hint}</p>
