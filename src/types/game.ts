@@ -19,11 +19,14 @@ export interface Category {
 
 export type GameMode = 
   | 'normal'
+  | 'detective'
   | 'everyone-imposter'
   | 'innocents-see-hint'
   | 'roles-switched'
   | 'two-words'
-  | 'jester';
+  | 'jester'
+  | 'breaking-point'
+  | 'healer';
 
 export interface GameSettings {
   theme: 'light' | 'dark';
@@ -45,6 +48,9 @@ export interface GameState {
   selectedHint2?: string;
   imposters: string[];
   jesterId?: string;
+  detectiveId?: string;
+  healerId?: string;
+  killedPlayerId?: string;
   activeGameMode: GameMode;
   votes: Record<string, string>;
 }

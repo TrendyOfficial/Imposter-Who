@@ -16,12 +16,18 @@ const HINT_PASSWORD = "8813";
 
 const gameModeLabels: Record<GameMode, string> = {
   'normal': '🎯 Normal',
+  'detective': '🔍 Detective',
   'everyone-imposter': '👻 Everyone Imposter',
   'innocents-see-hint': '👁️ Innocents See Hint',
   'roles-switched': '🔄 Roles Switched',
   'two-words': '✌️ Two Words',
   'jester': '🃏 Jester Mode (4+ spelers)',
+  'breaking-point': '💥 Breaking Point',
+  'healer': '💚 Healer',
 };
+
+const normalGameModes: GameMode[] = ['normal', 'detective'];
+const specialGameModes: GameMode[] = ['everyone-imposter', 'innocents-see-hint', 'roles-switched', 'two-words', 'jester', 'breaking-point', 'healer'];
 
 const Index = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -57,6 +63,7 @@ const Index = () => {
   const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
   const [hintPassword, setHintPassword] = useState("");
   const [hintUnlocked, setHintUnlocked] = useState(false);
+  const [gameModeTab, setGameModeTab] = useState<'normal' | 'special'>('normal');
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -136,6 +143,12 @@ const Index = () => {
       return;
     }
 
+    // Check breaking-point/healer player requirement
+    if ((activeMode === 'breaking-point' || activeMode === 'healer') && players.length < 3) {
+      toast.error("Breaking Point/Healer vereist minimaal 3 spelers!");
+      return;
+    }
+
     // Gather all words from selected categories
     const allWords = defaultCategories
       .filter(cat => selectedCategories.includes(cat.name))
@@ -151,6 +164,8 @@ const Index = () => {
     const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
     let imposterIds: string[] = [];
     let jesterId: string | undefined;
+    let detectiveId: string | undefined;
+    let healerId: string | undefined;
 
     // Handle different game modes
     switch (activeMode) {
@@ -161,6 +176,17 @@ const Index = () => {
         jesterId = shuffledPlayers[0].id;
         imposterIds = shuffledPlayers.slice(1, 1 + settings.numberOfImposters).map(p => p.id);
         break;
+      case 'detective':
+        detectiveId = shuffledPlayers[0].id;
+        imposterIds = shuffledPlayers.slice(1, 1 + settings.numberOfImposters).map(p => p.id);
+        break;
+      case 'breaking-point':
+        imposterIds = shuffledPlayers.slice(0, 1).map(p => p.id); // Only 1 imposter for breaking point
+        break;
+      case 'healer':
+        healerId = shuffledPlayers[0].id;
+        imposterIds = shuffledPlayers.slice(1, 2).map(p => p.id); // 1 healer + 1 imposter
+        break;
       default:
         imposterIds = shuffledPlayers.slice(0, settings.numberOfImposters).map(p => p.id);
     }
@@ -169,7 +195,7 @@ const Index = () => {
     const updatedPlayers = players.map(p => ({
       ...p,
       isImposter: activeMode === 'roles-switched' 
-        ? !imposterIds.includes(p.id) && p.id !== jesterId
+        ? !imposterIds.includes(p.id) && p.id !== jesterId && p.id !== detectiveId && p.id !== healerId
         : imposterIds.includes(p.id),
     }));
     setPlayers(updatedPlayers);
@@ -183,6 +209,8 @@ const Index = () => {
       selectedHint2: randomWord2?.hint,
       imposters: imposterIds,
       jesterId,
+      detectiveId,
+      healerId,
       activeGameMode: activeMode,
       votes: {},
     });
@@ -232,6 +260,9 @@ const Index = () => {
       imposters: [],
       activeGameMode: 'normal',
       votes: {},
+      detectiveId: undefined,
+      healerId: undefined,
+      killedPlayerId: undefined,
     });
     setCardFlipped(false);
     setPlayers(players.map(p => ({ ...p, isImposter: undefined })));
@@ -363,8 +394,27 @@ const Index = () => {
                       />
                     </div>
                   </div>
-                  <div className="grid gap-3">
-                    {(Object.keys(gameModeLabels) as GameMode[]).map((mode) => (
+
+                  {/* Normal/Special Tabs */}
+                  <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                    <Button
+                      variant={gameModeTab === 'normal' ? 'default' : 'ghost'}
+                      className="flex-1"
+                      onClick={() => setGameModeTab('normal')}
+                    >
+                      Normal
+                    </Button>
+                    <Button
+                      variant={gameModeTab === 'special' ? 'default' : 'ghost'}
+                      className="flex-1"
+                      onClick={() => setGameModeTab('special')}
+                    >
+                      Special
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3 animate-fade-in">
+                    {(gameModeTab === 'normal' ? normalGameModes : specialGameModes).map((mode) => (
                       <div
                         key={mode}
                         className={cn(
@@ -479,8 +529,8 @@ const Index = () => {
             </div>
 
             {/* Categories */}
-            <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-card rounded-2xl shadow-card p-6 border border-border max-h-[400px] flex flex-col">
+              <div className="flex items-center justify-between mb-6 flex-shrink-0">
                 <h2 className="text-2xl font-bold">📂 Categorieën</h2>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -558,7 +608,7 @@ const Index = () => {
                   </DialogContent>
                 </Dialog>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2 overflow-y-auto flex-1">
                 {defaultCategories.map((category) => (
                   <div
                     key={category.name}
@@ -581,19 +631,29 @@ const Index = () => {
               </div>
             </div>
 
-            <Button
-              onClick={startGame}
-              size="lg"
-              className="w-full text-lg h-14 rounded-2xl shadow-lg"
-            >
-              🎮 Start Spel
-            </Button>
+            <div className="sticky bottom-0 pt-4 bg-gradient-bg">
+              <Button
+                onClick={startGame}
+                size="lg"
+                className="w-full text-lg h-14 rounded-2xl shadow-lg"
+              >
+                🎮 Start Spel
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Viewing Cards Phase */}
         {gameState.phase === 'viewing-cards' && currentPlayer && (
           <div className="space-y-6 animate-scale-in">
+            {/* Special Gamemode Warning */}
+            {specialGameModes.includes(gameState.activeGameMode) && (
+              <div className="bg-destructive/10 border-2 border-destructive rounded-2xl p-6 text-center animate-pulse">
+                <p className="text-xl font-bold text-destructive mb-2">⚠️ SPECIAL GAMEMODE ACTIVE ⚠️</p>
+                <p className="text-lg font-semibold">{gameModeLabels[gameState.activeGameMode]}</p>
+              </div>
+            )}
+
             <GameCard
               content={gameState.selectedWord}
               content2={gameState.selectedWord2}
@@ -711,6 +771,36 @@ const Index = () => {
                       />
                       <span className="text-xl font-bold">
                         {players.find(p => p.id === gameState.jesterId)?.name}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {gameState.detectiveId && (
+                  <div className="p-4 bg-blue-500/10 rounded-xl">
+                    <p className="text-sm text-muted-foreground mb-2">De Detective was:</p>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: players.find(p => p.id === gameState.detectiveId)?.color }}
+                      />
+                      <span className="text-xl font-bold">
+                        {players.find(p => p.id === gameState.detectiveId)?.name}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {gameState.healerId && (
+                  <div className="p-4 bg-green-500/10 rounded-xl">
+                    <p className="text-sm text-muted-foreground mb-2">De Healer was:</p>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: players.find(p => p.id === gameState.healerId)?.color }}
+                      />
+                      <span className="text-xl font-bold">
+                        {players.find(p => p.id === gameState.healerId)?.name}
                       </span>
                     </div>
                   </div>
