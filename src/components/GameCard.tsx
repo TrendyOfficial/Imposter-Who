@@ -7,12 +7,13 @@ interface GameCardProps {
   hint?: string;
   isImposter: boolean;
   isJester?: boolean;
+  isDetective?: boolean;
   showHintToInnocents?: boolean;
   onFlipComplete: () => void;
   playerName: string;
 }
 
-export const GameCard = ({ content, content2, hint, isImposter, isJester, showHintToInnocents, onFlipComplete, playerName }: GameCardProps) => {
+export const GameCard = ({ content, content2, hint, isImposter, isJester, isDetective, showHintToInnocents, onFlipComplete, playerName }: GameCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [wasFlipped, setWasFlipped] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -120,8 +121,14 @@ export const GameCard = ({ content, content2, hint, isImposter, isJester, showHi
                 </>
               ) : (
                 <>
-                  <div className="text-6xl">✨</div>
+                  <div className="text-6xl">{isDetective ? '🔍' : '✨'}</div>
                   <div className="space-y-3">
+                    {isDetective && (
+                      <div className="bg-blue-500/20 rounded-lg p-3 mb-2">
+                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400">🔍 DETECTIVE</p>
+                        <p className="text-sm text-muted-foreground">Je stem telt 2x</p>
+                      </div>
+                    )}
                     <div className="bg-primary/10 rounded-lg p-6">
                       <p className="text-3xl font-bold text-foreground">{content}</p>
                       {content2 && (

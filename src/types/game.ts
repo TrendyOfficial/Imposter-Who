@@ -25,8 +25,7 @@ export type GameMode =
   | 'roles-switched'
   | 'two-words'
   | 'jester'
-  | 'breaking-point'
-  | 'healer';
+  | 'breaking-point';
 
 export interface GameSettings {
   theme: 'light' | 'dark';
@@ -52,5 +51,6 @@ export interface GameState {
   healerId?: string;
   killedPlayerId?: string;
   activeGameMode: GameMode;
+  normalGameMode?: GameMode;
   votes: Record<string, string>;
 }

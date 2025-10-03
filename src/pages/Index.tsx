@@ -16,18 +16,17 @@ const HINT_PASSWORD = "8813";
 
 const gameModeLabels: Record<GameMode, string> = {
   'normal': '🎯 Normal',
-  'detective': '🔍 Detective',
+  'detective': '🔍 Detective (4+ spelers)',
   'everyone-imposter': '👻 Everyone Imposter',
   'innocents-see-hint': '👁️ Innocents See Hint',
   'roles-switched': '🔄 Roles Switched',
   'two-words': '✌️ Two Words',
   'jester': '🃏 Jester Mode (4+ spelers)',
-  'breaking-point': '💥 Breaking Point',
-  'healer': '💚 Healer',
+  'breaking-point': '💥 Breaking Point (5+ spelers)',
 };
 
-const normalGameModes: GameMode[] = ['normal', 'detective'];
-const specialGameModes: GameMode[] = ['everyone-imposter', 'innocents-see-hint', 'roles-switched', 'two-words', 'jester', 'breaking-point', 'healer'];
+const normalGameModes: GameMode[] = ['normal', 'detective', 'everyone-imposter', 'innocents-see-hint', 'roles-switched', 'two-words', 'jester'];
+const specialGameModes: GameMode[] = ['breaking-point'];
 
 const Index = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -132,20 +131,48 @@ const Index = () => {
       return;
     }
 
-    // Select active game mode
-    const activeMode = settings.randomizeGameModes
-      ? settings.gameModes[Math.floor(Math.random() * settings.gameModes.length)]
-      : settings.gameModes[0];
+    // Separate selected modes into normal and special
+    const selectedNormalModes = settings.gameModes.filter(m => normalGameModes.includes(m));
+    const selectedSpecialModes = settings.gameModes.filter(m => specialGameModes.includes(m));
 
-    // Check jester mode player requirement
+    // Pick modes
+    let normalMode: GameMode = 'normal';
+    let specialMode: GameMode | null = null;
+
+    if (selectedSpecialModes.length > 0) {
+      // Pick random special mode
+      specialMode = settings.randomizeGameModes
+        ? selectedSpecialModes[Math.floor(Math.random() * selectedSpecialModes.length)]
+        : selectedSpecialModes[0];
+      
+      // Also pick random normal mode
+      if (selectedNormalModes.length > 0) {
+        normalMode = settings.randomizeGameModes
+          ? selectedNormalModes[Math.floor(Math.random() * selectedNormalModes.length)]
+          : selectedNormalModes[0];
+      }
+    } else {
+      // Only normal mode
+      normalMode = settings.randomizeGameModes
+        ? selectedNormalModes[Math.floor(Math.random() * selectedNormalModes.length)]
+        : selectedNormalModes[0];
+    }
+
+    const activeMode = specialMode || normalMode;
+
+    // Check player requirements
     if (activeMode === 'jester' && players.length < 4) {
       toast.error("Jester mode vereist minimaal 4 spelers!");
       return;
     }
 
-    // Check breaking-point/healer player requirement
-    if ((activeMode === 'breaking-point' || activeMode === 'healer') && players.length < 3) {
-      toast.error("Breaking Point/Healer vereist minimaal 3 spelers!");
+    if (activeMode === 'detective' && players.length < 4) {
+      toast.error("Detective mode vereist minimaal 4 spelers!");
+      return;
+    }
+
+    if (activeMode === 'breaking-point' && players.length < 5) {
+      toast.error("Breaking Point vereist minimaal 5 spelers!");
       return;
     }
 
@@ -157,7 +184,7 @@ const Index = () => {
     // Pick random word(s)
     const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
     let randomWord2;
-    if (activeMode === 'two-words') {
+    if (normalMode === 'two-words') {
       randomWord2 = allWords[Math.floor(Math.random() * allWords.length)];
     }
 
@@ -167,8 +194,8 @@ const Index = () => {
     let detectiveId: string | undefined;
     let healerId: string | undefined;
 
-    // Handle different game modes
-    switch (activeMode) {
+    // Handle normal game modes
+    switch (normalMode) {
       case 'everyone-imposter':
         imposterIds = players.map(p => p.id);
         break;
@@ -180,21 +207,29 @@ const Index = () => {
         detectiveId = shuffledPlayers[0].id;
         imposterIds = shuffledPlayers.slice(1, 1 + settings.numberOfImposters).map(p => p.id);
         break;
-      case 'breaking-point':
-        imposterIds = shuffledPlayers.slice(0, 1).map(p => p.id); // Only 1 imposter for breaking point
-        break;
-      case 'healer':
-        healerId = shuffledPlayers[0].id;
-        imposterIds = shuffledPlayers.slice(1, 2).map(p => p.id); // 1 healer + 1 imposter
-        break;
       default:
         imposterIds = shuffledPlayers.slice(0, settings.numberOfImposters).map(p => p.id);
+    }
+
+    // Handle special game mode (Breaking Point)
+    if (specialMode === 'breaking-point') {
+      // Override imposter count to 1 for breaking point
+      imposterIds = shuffledPlayers.slice(0, 1).map(p => p.id);
+      // Assign healer (cannot be imposter or jester)
+      const availableForHealer = shuffledPlayers.filter(p => 
+        !imposterIds.includes(p.id) && 
+        p.id !== jesterId &&
+        p.id !== detectiveId
+      );
+      if (availableForHealer.length > 0) {
+        healerId = availableForHealer[0].id;
+      }
     }
 
     // Update players with roles
     const updatedPlayers = players.map(p => ({
       ...p,
-      isImposter: activeMode === 'roles-switched' 
+      isImposter: normalMode === 'roles-switched' 
         ? !imposterIds.includes(p.id) && p.id !== jesterId && p.id !== detectiveId && p.id !== healerId
         : imposterIds.includes(p.id),
     }));
@@ -203,20 +238,24 @@ const Index = () => {
     setGameState({
       phase: 'viewing-cards',
       currentPlayerIndex: 0,
-      selectedWord: activeMode === 'roles-switched' ? randomWord.hint : randomWord.word,
+      selectedWord: normalMode === 'roles-switched' ? randomWord.hint : randomWord.word,
       selectedWord2: randomWord2?.word,
-      selectedHint: settings.hintEnabled ? (activeMode === 'roles-switched' ? randomWord.word : randomWord.hint) : '',
+      selectedHint: settings.hintEnabled ? (normalMode === 'roles-switched' ? randomWord.word : randomWord.hint) : '',
       selectedHint2: randomWord2?.hint,
       imposters: imposterIds,
       jesterId,
       detectiveId,
       healerId,
       activeGameMode: activeMode,
+      normalGameMode: normalMode,
       votes: {},
     });
 
     setCardFlipped(false);
-    toast.success(`Spel gestart! Mode: ${gameModeLabels[activeMode]}`);
+    const modeText = specialMode 
+      ? `${gameModeLabels[specialMode]} + ${gameModeLabels[normalMode]}`
+      : gameModeLabels[normalMode];
+    toast.success(`Spel gestart! Mode: ${modeText}`);
   };
 
   const nextPlayer = () => {
@@ -259,6 +298,7 @@ const Index = () => {
       selectedHint: '',
       imposters: [],
       activeGameMode: 'normal',
+      normalGameMode: undefined,
       votes: {},
       detectiveId: undefined,
       healerId: undefined,
@@ -660,7 +700,8 @@ const Index = () => {
               hint={gameState.selectedHint}
               isImposter={currentPlayer.isImposter || false}
               isJester={currentPlayer.id === gameState.jesterId}
-              showHintToInnocents={gameState.activeGameMode === 'innocents-see-hint'}
+              isDetective={currentPlayer.id === gameState.detectiveId}
+              showHintToInnocents={gameState.normalGameMode === 'innocents-see-hint'}
               onFlipComplete={() => setCardFlipped(true)}
               playerName={currentPlayer.name}
             />
@@ -807,8 +848,24 @@ const Index = () => {
                 )}
 
                 <div className="p-4 bg-muted/50 rounded-xl">
-                  <p className="text-sm text-muted-foreground mb-1">Game Mode:</p>
-                  <p className="text-lg font-bold">{gameModeLabels[gameState.activeGameMode]}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Game Mode{specialGameModes.includes(gameState.activeGameMode) ? 's' : ''}:</p>
+                  <div className="space-y-1">
+                    {specialGameModes.includes(gameState.activeGameMode) && (
+                      <p className="text-lg font-bold text-destructive">
+                        ⚠️ {gameModeLabels[gameState.activeGameMode]}
+                      </p>
+                    )}
+                    {gameState.normalGameMode && (
+                      <p className="text-lg font-bold">
+                        {gameModeLabels[gameState.normalGameMode]}
+                      </p>
+                    )}
+                    {!gameState.normalGameMode && !specialGameModes.includes(gameState.activeGameMode) && (
+                      <p className="text-lg font-bold">
+                        {gameModeLabels[gameState.activeGameMode]}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
