@@ -701,6 +701,7 @@ const Index = () => {
               isImposter={currentPlayer.isImposter || false}
               isJester={currentPlayer.id === gameState.jesterId}
               isDetective={currentPlayer.id === gameState.detectiveId}
+              isHealer={currentPlayer.id === gameState.healerId}
               showHintToInnocents={gameState.normalGameMode === 'innocents-see-hint'}
               onFlipComplete={() => setCardFlipped(true)}
               playerName={currentPlayer.name}
