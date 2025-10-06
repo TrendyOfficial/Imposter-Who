@@ -63,6 +63,26 @@ const Index = () => {
   const [hintPassword, setHintPassword] = useState("");
   const [hintUnlocked, setHintUnlocked] = useState(false);
   const [gameModeTab, setGameModeTab] = useState<'normal' | 'special'>('normal');
+  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+
+  // Load saved data from localStorage
+  useEffect(() => {
+    const savedData = localStorage.getItem('whoGameData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.players) setPlayers(parsed.players);
+        if (parsed.categories) setCategories(parsed.categories);
+        if (parsed.settings) setSettings(parsed.settings);
+        if (parsed.selectedCategories) setSelectedCategories(parsed.selectedCategories);
+        toast.success("Opgeslagen gegevens geladen!");
+      } catch (e) {
+        console.error("Failed to load saved data", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -72,8 +92,58 @@ const Index = () => {
     }
   }, [theme]);
 
+  // Timer countdown
+  useEffect(() => {
+    if (gameState.phase === 'discussion' && settings.timerEnabled && timerSeconds > 0) {
+      const interval = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            toast.info("Timer afgelopen!");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [gameState.phase, settings.timerEnabled, timerSeconds]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const saveData = () => {
+    const dataToSave = {
+      players,
+      categories,
+      settings,
+      selectedCategories,
+    };
+    localStorage.setItem('whoGameData', JSON.stringify(dataToSave));
+    toast.success("Gegevens opgeslagen!");
+  };
+
+  const resetData = () => {
+    localStorage.removeItem('whoGameData');
+    setPlayers([
+      { id: '1', name: 'Speler 1', color: '#8B5CF6' },
+      { id: '2', name: 'Speler 2', color: '#06B6D4' },
+      { id: '3', name: 'Speler 3', color: '#F59E0B' },
+    ]);
+    setCategories(defaultCategories);
+    setSelectedCategories(defaultCategories.filter(c => c.isDefault).map(c => c.name));
+    setSettings({
+      theme: 'light',
+      language: 'nl',
+      gameModes: ['normal'],
+      randomizeGameModes: false,
+      timerEnabled: false,
+      timerLength: 300,
+      numberOfImposters: 1,
+      hintEnabled: true,
+    });
+    toast.success("Gegevens gereset!");
   };
 
   const addPlayer = () => {
@@ -113,6 +183,30 @@ const Index = () => {
         ? prev.gameModes.filter(m => m !== mode)
         : [...prev.gameModes, mode]
     }));
+  };
+
+  const updateCategoryWords = (categoryName: string, newWords: { word: string; hint: string }[]) => {
+    setCategories(prev => prev.map(cat => 
+      cat.name === categoryName 
+        ? { ...cat, words: newWords }
+        : cat
+    ));
+    toast.success("Woorden bijgewerkt!");
+  };
+
+  const randomizePlayers = () => {
+    const shuffled = [...players].sort(() => Math.random() - 0.5);
+    setPlayers(shuffled);
+    toast.success("Spelers gerandomiseerd!");
+  };
+
+  const randomizeCategories = () => {
+    const availableCategories = categories.filter(c => selectedCategories.includes(c.name));
+    if (availableCategories.length > 0) {
+      const randomCat = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+      setSelectedCategories([randomCat.name]);
+      toast.success(`Categorie gerandomiseerd: ${randomCat.name}`);
+    }
   };
 
   const startGame = () => {
@@ -177,7 +271,7 @@ const Index = () => {
     }
 
     // Gather all words from selected categories
-    const allWords = defaultCategories
+    const allWords = categories
       .filter(cat => selectedCategories.includes(cat.name))
       .flatMap(cat => cat.words);
 
@@ -194,30 +288,40 @@ const Index = () => {
     let detectiveId: string | undefined;
     let healerId: string | undefined;
 
-    // Handle normal game modes
+    // Assign imposters first
     switch (normalMode) {
       case 'everyone-imposter':
         imposterIds = players.map(p => p.id);
         break;
-      case 'jester':
-        jesterId = shuffledPlayers[0].id;
-        imposterIds = shuffledPlayers.slice(1, 1 + settings.numberOfImposters).map(p => p.id);
-        break;
-      case 'detective':
-        detectiveId = shuffledPlayers[0].id;
-        imposterIds = shuffledPlayers.slice(1, 1 + settings.numberOfImposters).map(p => p.id);
-        break;
       default:
         imposterIds = shuffledPlayers.slice(0, settings.numberOfImposters).map(p => p.id);
+    }
+
+    // Get non-imposter players for extra roles
+    const nonImposterPlayers = shuffledPlayers.filter(p => !imposterIds.includes(p.id));
+
+    // Assign extra roles to non-imposters only
+    switch (normalMode) {
+      case 'jester':
+        if (nonImposterPlayers.length > 0) {
+          jesterId = nonImposterPlayers[0].id;
+        }
+        break;
+      case 'detective':
+        if (nonImposterPlayers.length > 0) {
+          detectiveId = nonImposterPlayers[0].id;
+        }
+        break;
     }
 
     // Handle special game mode (Breaking Point)
     if (specialMode === 'breaking-point') {
       // Override imposter count to 1 for breaking point
       imposterIds = shuffledPlayers.slice(0, 1).map(p => p.id);
-      // Assign healer (cannot be imposter or jester)
-      const availableForHealer = shuffledPlayers.filter(p => 
-        !imposterIds.includes(p.id) && 
+      // Recalculate non-imposter players
+      const nonImposterPlayersForSpecial = shuffledPlayers.filter(p => !imposterIds.includes(p.id));
+      // Assign healer (cannot be imposter, jester, or detective)
+      const availableForHealer = nonImposterPlayersForSpecial.filter(p => 
         p.id !== jesterId &&
         p.id !== detectiveId
       );
@@ -272,6 +376,7 @@ const Index = () => {
       setCardFlipped(false);
     } else {
       setGameState(prev => ({ ...prev, phase: 'discussion' }));
+      setTimerSeconds(settings.timerLength);
       toast.success("Alle spelers hebben hun kaart gezien! Start de discussie.");
     }
   };
@@ -356,11 +461,37 @@ const Index = () => {
           <div className="space-y-8 animate-fade-in">
             {/* Settings */}
             <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <SettingsIcon className="h-6 w-6" />
-                Instellingen
-              </h2>
-              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <SettingsIcon className="h-6 w-6" />
+                    Instellingen
+                  </h2>
+                  <div className="flex gap-2">
+                    <Button onClick={saveData} variant="default" size="sm">
+                      💾 Opslaan
+                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          🔄 Reset
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Alles resetten?</DialogTitle>
+                        </DialogHeader>
+                        <p className="text-muted-foreground">
+                          Dit zal alle spelers, categorieën en instellingen resetten naar standaard waarden.
+                        </p>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => {}}>Annuleren</Button>
+                          <Button variant="destructive" onClick={resetData}>Reset</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+                <div className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="timer">Timer</Label>
@@ -481,10 +612,15 @@ const Index = () => {
             <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">👥 Spelers ({players.length})</h2>
-                <Button onClick={addPlayer} size="sm" className="rounded-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Speler Toevoegen
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={randomizePlayers} size="sm" variant="outline" className="rounded-full">
+                    🔀 Randomize
+                  </Button>
+                  <Button onClick={addPlayer} size="sm" className="rounded-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Toevoegen
+                  </Button>
+                </div>
               </div>
               <div className="grid gap-3 max-h-64 overflow-y-auto">
                 {players.map((player) => (
@@ -569,21 +705,25 @@ const Index = () => {
             </div>
 
             {/* Categories */}
-            <div className="bg-card rounded-2xl shadow-card p-6 border border-border max-h-[400px] flex flex-col">
+            <div className="bg-card rounded-2xl shadow-card p-6 border border-border max-h-[500px] flex flex-col">
               <div className="flex items-center justify-between mb-6 flex-shrink-0">
                 <h2 className="text-2xl font-bold">📂 Categorieën</h2>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="rounded-full">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Woorden Bekijken
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[80vh]">
-                    <DialogHeader>
-                      <DialogTitle>Woorden per Categorie</DialogTitle>
-                    </DialogHeader>
-                    {!hintUnlocked ? (
+                <div className="flex gap-2">
+                  <Button onClick={randomizeCategories} variant="outline" size="sm" className="rounded-full">
+                    🔀 Randomize
+                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-full">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Woorden Bekijken
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+                      <DialogHeader className="flex-shrink-0">
+                        <DialogTitle>Woorden per Categorie</DialogTitle>
+                      </DialogHeader>
+                      {!hintUnlocked ? (
                       <div className="space-y-4 p-6">
                         <p className="text-muted-foreground">Voer de code in om hints te bekijken:</p>
                         <Input
@@ -612,44 +752,132 @@ const Index = () => {
                           Ontgrendelen
                         </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-4 overflow-y-auto max-h-[60vh]">
-                        {defaultCategories.map((category) => (
-                          <div key={category.name} className="space-y-2">
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left"
-                              onClick={() => setViewingCategory(
-                                viewingCategory?.name === category.name ? null : category
-                              )}
-                            >
-                              <span className="mr-2">{category.emoji}</span>
-                              {category.name}
-                            </Button>
-                            {viewingCategory?.name === category.name && (
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-4 animate-accordion-down">
-                                {category.words.map((word, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="p-3 bg-muted rounded-lg text-sm"
-                                  >
-                                    <div className="font-medium">{word.word}</div>
-                                    <div className="text-xs text-muted-foreground">
-                                      Hint: {word.hint}
+                      ) : (
+                        <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
+                          {categories.map((category) => (
+                            <div key={category.name} className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 justify-start text-left"
+                                  onClick={() => setViewingCategory(
+                                    viewingCategory?.name === category.name ? null : category
+                                  )}
+                                >
+                                  <span className="mr-2">{category.emoji}</span>
+                                  {category.name}
+                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setEditingCategory(category)}
+                                    >
+                                      ✏️ Wijzig
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>Wijzig Woorden - {category.name}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-3">
+                                      {editingCategory?.name === category.name && editingCategory.words.map((word, idx) => (
+                                        <div key={idx} className="flex gap-2 items-center">
+                                          <Input
+                                            value={word.word}
+                                            onChange={(e) => {
+                                              const newWords = [...editingCategory.words];
+                                              newWords[idx] = { ...newWords[idx], word: e.target.value };
+                                              setEditingCategory({ ...editingCategory, words: newWords });
+                                            }}
+                                            placeholder="Woord"
+                                          />
+                                          <Input
+                                            value={word.hint}
+                                            onChange={(e) => {
+                                              const newWords = [...editingCategory.words];
+                                              newWords[idx] = { ...newWords[idx], hint: e.target.value };
+                                              setEditingCategory({ ...editingCategory, words: newWords });
+                                            }}
+                                            placeholder="Hint"
+                                          />
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                              const newWords = editingCategory.words.filter((_, i) => i !== idx);
+                                              setEditingCategory({ ...editingCategory, words: newWords });
+                                            }}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                          if (editingCategory) {
+                                            setEditingCategory({
+                                              ...editingCategory,
+                                              words: [...editingCategory.words, { word: '', hint: '' }]
+                                            });
+                                          }
+                                        }}
+                                        className="w-full"
+                                      >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Woord Toevoegen
+                                      </Button>
                                     </div>
-                                  </div>
-                                ))}
+                                    <DialogFooter>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                          setEditingCategory(null);
+                                        }}
+                                      >
+                                        Annuleren
+                                      </Button>
+                                      <Button
+                                        onClick={() => {
+                                          if (editingCategory) {
+                                            updateCategoryWords(editingCategory.name, editingCategory.words);
+                                            setEditingCategory(null);
+                                          }
+                                        }}
+                                      >
+                                        Opslaan
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
                               </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
+                              {viewingCategory?.name === category.name && (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-4 animate-accordion-down">
+                                  {category.words.map((word, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="p-3 bg-muted rounded-lg text-sm"
+                                    >
+                                      <div className="font-medium">{word.word}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Hint: {word.hint}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2 overflow-y-auto flex-1">
-                {defaultCategories.map((category) => (
+                {categories.map((category) => (
                   <div
                     key={category.name}
                     className={cn(
@@ -746,7 +974,7 @@ const Index = () => {
               </p>
               {settings.timerEnabled && (
                 <div className="text-4xl font-bold text-primary mb-4">
-                  {Math.floor(settings.timerLength / 60)}:{(settings.timerLength % 60).toString().padStart(2, '0')}
+                  {Math.floor(timerSeconds / 60)}:{(timerSeconds % 60).toString().padStart(2, '0')}
                 </div>
               )}
             </div>
