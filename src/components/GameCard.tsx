@@ -12,9 +12,10 @@ interface GameCardProps {
   showHintToInnocents?: boolean;
   onFlipComplete: () => void;
   playerName: string;
+  playerColor?: string;
 }
 
-export const GameCard = ({ content, content2, hint, isImposter, isJester, isDetective, isHealer, showHintToInnocents, onFlipComplete, playerName }: GameCardProps) => {
+export const GameCard = ({ content, content2, hint, isImposter, isJester, isDetective, isHealer, showHintToInnocents, onFlipComplete, playerName, playerColor }: GameCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [wasFlipped, setWasFlipped] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -69,10 +70,13 @@ export const GameCard = ({ content, content2, hint, isImposter, isJester, isDete
           <div
             className={cn(
               "absolute inset-0 backface-hidden rounded-2xl",
-              "bg-gradient-card shadow-card border-2 border-primary/20",
+              "shadow-card border-2 border-primary/20",
               "flex items-center justify-center"
             )}
-            style={{ backfaceVisibility: "hidden" }}
+            style={{ 
+              backfaceVisibility: "hidden",
+              background: playerColor || 'var(--gradient-card)'
+            }}
           >
             <div className="text-center space-y-4">
               <div className="text-6xl">🎴</div>

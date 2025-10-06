@@ -29,6 +29,7 @@ export type GameMode =
 
 export interface GameSettings {
   theme: 'light' | 'dark';
+  themeName?: string;
   language: 'nl';
   gameModes: GameMode[];
   randomizeGameModes: boolean;

@@ -11,6 +11,9 @@ import { Player, GameSettings, GameState, Category, GameMode } from "@/types/gam
 import { Moon, Sun, Plus, X, Eye, Settings as SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ThemeName } from "@/types/theme";
+import { useTheme } from "@/hooks/useTheme";
+import { useNavigate } from "react-router-dom";
 
 const HINT_PASSWORD = "8813";
 
@@ -29,17 +32,20 @@ const normalGameModes: GameMode[] = ['normal', 'detective', 'everyone-imposter',
 const specialGameModes: GameMode[] = ['breaking-point'];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [themeName, setThemeName] = useState<ThemeName>('default');
   const [players, setPlayers] = useState<Player[]>([
-    { id: '1', name: 'Speler 1', color: '#8B5CF6' },
-    { id: '2', name: 'Speler 2', color: '#06B6D4' },
-    { id: '3', name: 'Speler 3', color: '#F59E0B' },
+    { id: '1', name: 'Speler 1', color: 'linear-gradient(135deg, #8B5CF6, #A78BFA)' },
+    { id: '2', name: 'Speler 2', color: 'linear-gradient(135deg, #06B6D4, #22D3EE)' },
+    { id: '3', name: 'Speler 3', color: 'linear-gradient(135deg, #F59E0B, #FBBF24)' },
   ]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     defaultCategories.filter(c => c.isDefault).map(c => c.name)
   );
   const [settings, setSettings] = useState<GameSettings>({
     theme: 'light',
+    themeName: 'default',
     language: 'nl',
     gameModes: ['normal'],
     randomizeGameModes: false,
@@ -48,6 +54,9 @@ const Index = () => {
     numberOfImposters: 1,
     hintEnabled: true,
   });
+
+  // Apply theme
+  useTheme(themeName, theme);
   const [gameState, setGameState] = useState<GameState>({
     phase: 'lobby',
     currentPlayerIndex: 0,
@@ -75,7 +84,10 @@ const Index = () => {
         const parsed = JSON.parse(savedData);
         if (parsed.players) setPlayers(parsed.players);
         if (parsed.categories) setCategories(parsed.categories);
-        if (parsed.settings) setSettings(parsed.settings);
+        if (parsed.settings) {
+          setSettings(parsed.settings);
+          if (parsed.settings.themeName) setThemeName(parsed.settings.themeName);
+        }
         if (parsed.selectedCategories) setSelectedCategories(parsed.selectedCategories);
         toast.success("Opgeslagen gegevens geladen!");
       } catch (e) {
@@ -83,14 +95,6 @@ const Index = () => {
       }
     }
   }, []);
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   // Timer countdown
   useEffect(() => {
@@ -127,14 +131,15 @@ const Index = () => {
   const resetData = () => {
     localStorage.removeItem('whoGameData');
     setPlayers([
-      { id: '1', name: 'Speler 1', color: '#8B5CF6' },
-      { id: '2', name: 'Speler 2', color: '#06B6D4' },
-      { id: '3', name: 'Speler 3', color: '#F59E0B' },
+      { id: '1', name: 'Speler 1', color: 'linear-gradient(135deg, #8B5CF6, #A78BFA)' },
+      { id: '2', name: 'Speler 2', color: 'linear-gradient(135deg, #06B6D4, #22D3EE)' },
+      { id: '3', name: 'Speler 3', color: 'linear-gradient(135deg, #F59E0B, #FBBF24)' },
     ]);
     setCategories(defaultCategories);
     setSelectedCategories(defaultCategories.filter(c => c.isDefault).map(c => c.name));
     setSettings({
       theme: 'light',
+      themeName: 'default',
       language: 'nl',
       gameModes: ['normal'],
       randomizeGameModes: false,
@@ -143,15 +148,19 @@ const Index = () => {
       numberOfImposters: 1,
       hintEnabled: true,
     });
+    setThemeName('default');
+    setTheme('light');
     toast.success("Gegevens gereset!");
   };
 
   const addPlayer = () => {
     const newId = (players.length + 1).toString();
+    const hue = Math.floor(Math.random() * 360);
+    const gradient = `linear-gradient(135deg, hsl(${hue}, 70%, 55%), hsl(${hue}, 75%, 65%))`;
     setPlayers([...players, {
       id: newId,
       name: `Speler ${newId}`,
-      color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+      color: gradient,
     }]);
   };
 
@@ -416,14 +425,25 @@ const Index = () => {
   const currentPlayer = players[gameState.currentPlayerIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-bg transition-colors duration-300">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-bg transition-colors duration-300 relative overflow-hidden">
+      {/* Ambient glow for dark mode */}
+      <div className="fixed inset-0 pointer-events-none" style={{ background: 'var(--ambient-glow, none)' }} />
+      
+      <div className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 animate-fade-in">
           <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Who? 🎭
           </h1>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate('/settings')}
+              className="rounded-full"
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -630,8 +650,8 @@ const Index = () => {
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: player.color }}
+                        className="w-8 h-8 rounded-full"
+                        style={{ background: player.color }}
                       />
                       <span className="font-medium">{player.name}</span>
                     </div>
@@ -663,16 +683,25 @@ const Index = () => {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="player-color">Kleur</Label>
-                            <Input
-                              id="player-color"
-                              type="color"
-                              value={editingPlayer?.color || '#8B5CF6'}
-                              onChange={(e) =>
-                                setEditingPlayer(prev =>
-                                  prev ? { ...prev, color: e.target.value } : null
-                                )
-                              }
+                            <Label htmlFor="player-color">Kleur Gradient</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  const hue = Math.floor(Math.random() * 360);
+                                  const gradient = `linear-gradient(135deg, hsl(${hue}, 70%, 55%), hsl(${hue}, 75%, 65%))`;
+                                  setEditingPlayer(prev =>
+                                    prev ? { ...prev, color: gradient } : null
+                                  );
+                                }}
+                                variant="outline"
+                                className="flex-1"
+                              >
+                                🎨 Random Gradient
+                              </Button>
+                            </div>
+                            <div
+                              className="w-full h-20 rounded-lg"
+                              style={{ background: editingPlayer?.color }}
                             />
                           </div>
                         </div>
@@ -933,6 +962,7 @@ const Index = () => {
               showHintToInnocents={gameState.normalGameMode === 'innocents-see-hint'}
               onFlipComplete={() => setCardFlipped(true)}
               playerName={currentPlayer.name}
+              playerColor={currentPlayer.color}
             />
 
             <Button
