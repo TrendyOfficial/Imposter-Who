@@ -1,2 +1,2 @@
-# Free To Use Imposter Ganme
+# Free To Use Imposter Game
 (Based on NL, as requested)
