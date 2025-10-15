@@ -173,7 +173,7 @@ const Index = () => {
     setCategories(defaultCategories);
     setSelectedCategories(defaultCategories.filter(c => c.isDefault).map(c => c.name));
     setSettings({
-      theme: 'light',
+      theme: 'dark',
       themeName: 'default',
       language: 'nl',
       gameModes: ['normal'],
