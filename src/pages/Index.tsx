@@ -15,7 +15,7 @@ import { ThemeName } from "@/types/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useThemeAdaptation } from "@/hooks/useThemeAdaptation";
 import { useNavigate } from "react-router-dom";
-const HINT_PASSWORD = "8813";
+const HINT_PASSWORD = "0000"; 
 const gameModeLabels: Record<GameMode, string> = {
   'normal': '🎯 Normal',
   'detective': '🔍 Detective (4+ spelers)',
@@ -47,7 +47,7 @@ const Index = () => {
   }]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(defaultCategories.filter(c => c.isDefault).map(c => c.name));
   const [settings, setSettings] = useState<GameSettings>({
-    theme: 'light',
+    theme: 'dark',
     themeName: 'default',
     language: 'nl',
     gameModes: ['normal'],
@@ -528,12 +528,12 @@ const Index = () => {
                   </h2>
                   <div className="flex gap-2">
                     <Button onClick={saveData} variant="default" size="sm">
-                      💾 Opslaan
+                      💾
                     </Button>
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button variant="destructive" size="sm">
-                          🔄 Reset
+                          🔄
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -755,7 +755,7 @@ const Index = () => {
             </div>
 
             <Button onClick={endGame} size="lg" className="w-full text-lg h-14 rounded-2xl">
-              🗳️ Naar Stemmen
+              🗳️ Onthul Imposter & woord
             </Button>
           </div>}
 
@@ -843,12 +843,16 @@ const Index = () => {
 
               <div className="flex gap-4">
                 <Button onClick={resetGame} variant="outline" size="lg" className="flex-1 text-lg h-14 rounded-2xl">
-                  🏠 Terug naar Lobby
+                  🏠 Lobby
                 </Button>
                 <Button onClick={startGame} size="lg" className="flex-1 text-lg h-14 rounded-2xl">
-                  🔄 Nieuwe Ronde
+                  🆕 Ronde
                 </Button>
               </div>
+            </div>
+          </div>}
+      </div>
+    </div>;
             </div>
           </div>}
       </div>
