@@ -755,7 +755,7 @@ const Index = () => {
             </div>
 
             <Button onClick={endGame} size="lg" className="w-full text-lg h-14 rounded-2xl">
-              🗳️ Onthul Imposter & woord
+              🗳️ Bekijk Ronde
             </Button>
           </div>}
 
