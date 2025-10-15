@@ -88,7 +88,10 @@ const Index = () => {
         if (parsed.categories) setCategories(parsed.categories);
         if (parsed.settings) {
           setSettings(parsed.settings);
-          if (parsed.settings.themeName) setThemeName(parsed.settings.themeName);
+          // Validate theme name exists
+          const validThemes: ThemeName[] = ['default', 'classic', 'grape', 'spiderman', 'ember', 'wolverine', 'acid', 'spark', 'hulk', 'popsicle', 'noir'];
+          const validThemeName = validThemes.includes(parsed.settings.themeName) ? parsed.settings.themeName : 'default';
+          setThemeName(validThemeName);
         }
         if (parsed.selectedCategories) setSelectedCategories(parsed.selectedCategories);
         toast.success("Opgeslagen gegevens geladen!");

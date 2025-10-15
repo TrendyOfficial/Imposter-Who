@@ -16,7 +16,11 @@ export const SettingsWrapper = () => {
     try {
       const parsed = JSON.parse(savedData);
       if (parsed.settings?.theme) initialTheme = parsed.settings.theme;
-      if (parsed.settings?.themeName) initialThemeName = parsed.settings.themeName;
+      if (parsed.settings?.themeName) {
+        // Validate theme name exists in themePresets
+        const validThemes: ThemeName[] = ['default', 'classic', 'grape', 'spiderman', 'ember', 'wolverine', 'acid', 'spark', 'hulk', 'popsicle', 'noir'];
+        initialThemeName = validThemes.includes(parsed.settings.themeName) ? parsed.settings.themeName : 'default';
+      }
     } catch (e) {
       console.error("Failed to load theme", e);
     }

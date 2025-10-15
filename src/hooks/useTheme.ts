@@ -3,7 +3,7 @@ import { ThemeName, themePresets } from '@/types/theme';
 
 export const useTheme = (themeName: ThemeName, mode: 'light' | 'dark') => {
   useEffect(() => {
-    const theme = themePresets[themeName];
+    const theme = themePresets[themeName] || themePresets['default'];
     const root = document.documentElement;
 
     // Set primary colors (same for both modes)
