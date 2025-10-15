@@ -94,7 +94,10 @@ const Index = () => {
           // Validate theme name exists
           const validThemes: ThemeName[] = ['default', 'classic', 'grape', 'spiderman', 'ember', 'wolverine', 'acid', 'spark', 'hulk', 'popsicle', 'noir', 'blue', 'teal', 'red', 'gray', 'green', 'forest', 'autumn', 'mocha', 'pink'];
           const validThemeName = validThemes.includes(parsed.settings.themeName) ? parsed.settings.themeName : 'default';
-          setSettings({...parsed.settings, themeName: validThemeName});
+          setSettings({
+            ...parsed.settings,
+            themeName: validThemeName
+          });
           setThemeName(validThemeName);
           if (parsed.settings.theme) setTheme(parsed.settings.theme);
         }
@@ -128,12 +131,15 @@ const Index = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (containerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+        const {
+          scrollTop,
+          scrollHeight,
+          clientHeight
+        } = containerRef.current;
         const isBottom = scrollTop + clientHeight >= scrollHeight - 50;
         setIsAtBottom(isBottom);
       }
     };
-
     const container = containerRef.current;
     if (container) {
       container.addEventListener('scroll', handleScroll);
@@ -148,7 +154,11 @@ const Index = () => {
     const dataToSave = {
       players,
       categories,
-      settings: { ...settings, theme, themeName },
+      settings: {
+        ...settings,
+        theme,
+        themeName
+      },
       selectedCategories,
       themeAdaptation
     };
@@ -190,10 +200,9 @@ const Index = () => {
   };
   // Track deleted player numbers
   const [deletedPlayerNumbers, setDeletedPlayerNumbers] = useState<number[]>([]);
-
   const addPlayer = () => {
     let newId: string;
-    
+
     // Reuse deleted player number if available
     if (deletedPlayerNumbers.length > 0) {
       const reusedNumber = Math.min(...deletedPlayerNumbers);
@@ -204,32 +213,28 @@ const Index = () => {
       const maxId = Math.max(...players.map(p => parseInt(p.id) || 0), 0);
       newId = (maxId + 1).toString();
     }
-    
     const hue = Math.floor(Math.random() * 360);
     const gradient = `linear-gradient(135deg, hsl(${hue}, 70%, 55%), hsl(${hue}, 75%, 65%))`;
-    
+
     // Add player and sort by ID
     const newPlayers = [...players, {
       id: newId,
       name: `Speler ${newId}`,
       color: gradient
     }].sort((a, b) => parseInt(a.id) - parseInt(b.id));
-    
     setPlayers(newPlayers);
   };
-
   const removePlayer = (id: string) => {
     if (players.length <= 2) {
       toast.error("Je hebt minimaal 2 spelers nodig!");
       return;
     }
-    
+
     // Track the deleted player number for reuse
     const deletedNumber = parseInt(id);
     if (!isNaN(deletedNumber)) {
       setDeletedPlayerNumbers(prev => [...prev, deletedNumber].sort((a, b) => a - b));
     }
-    
     setPlayers(players.filter(p => p.id !== id));
     setEditingPlayer(null);
   };
@@ -465,32 +470,26 @@ const Index = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8 animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-bold transition-all duration-300">
-            <span style={{ 
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>Who?</span>{' '}
-            <span style={{ 
-              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>🎭</span>
+            <span style={{
+            background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>Who?</span>{' '}
+            <span style={{
+            background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>🎭</span>
           </h1>
           <div className="flex items-center gap-2 md:gap-4">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/settings')} 
-              className="rounded-full transition-all duration-300 hover:border-primary hover:bg-primary/10"
-              style={{
-                '--tw-border-opacity': '1',
-              } as React.CSSProperties}
-            >
+            <Button variant="outline" size="icon" onClick={() => navigate('/settings')} className="rounded-full transition-all duration-300 hover:border-primary hover:bg-primary/10" style={{
+            '--tw-border-opacity': '1'
+          } as React.CSSProperties}>
               <SettingsIcon className="h-5 w-5" style={{
-                color: 'hsl(var(--primary))'
-              }} />
+              color: 'hsl(var(--primary))'
+            }} />
             </Button>
             <Button variant="outline" size="icon" onClick={toggleTheme} className="rounded-full">
               {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -708,16 +707,7 @@ const Index = () => {
             </div>
 
             <div className="sticky bottom-0 pt-4 bg-gradient-bg pb-4">
-              <Button 
-                onClick={startGame} 
-                size="lg" 
-                className={cn(
-                  "w-full rounded-2xl shadow-lg transition-all duration-300",
-                  isAtBottom 
-                    ? "text-base md:text-lg h-12 md:h-14" 
-                    : "text-sm md:text-base h-10 md:h-12 hover:h-12 hover:text-base md:hover:h-14 md:hover:text-lg"
-                )}
-              >
+              <Button onClick={startGame} size="lg" className={cn("w-full rounded-2xl shadow-lg transition-all duration-300", isAtBottom ? "text-base md:text-lg h-12 md:h-14" : "text-sm md:text-base h-10 md:h-12 hover:h-12 hover:text-base md:hover:h-14 md:hover:text-lg")}>
                 🎮 Start Spel
               </Button>
             </div>
@@ -841,13 +831,9 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <Button onClick={resetGame} variant="outline" size="lg" className="flex-1 text-lg h-14 rounded-2xl">
-                  🏠 Terug naar Lobby
-                </Button>
-                <Button onClick={startGame} size="lg" className="flex-1 text-lg h-14 rounded-2xl">
-                  🔄 Nieuwe Ronde
-                </Button>
+              <div className="flex gap-4 mx-[100px] px-[111px]">
+                <Button onClick={resetGame} variant="outline" size="lg" className="flex-1 h-14 rounded-2xl text-lg font-semibold">🏠 Lobby</Button>
+                <Button onClick={startGame} size="lg" className="flex-1 text-lg h-14 rounded-2xl">Nieuwe Ronde</Button>
               </div>
             </div>
           </div>}
