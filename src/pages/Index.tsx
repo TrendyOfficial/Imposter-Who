@@ -450,10 +450,14 @@ const Index = () => {
                     Instellingen
                   </h2>
                   <div className="flex gap-2">
-                    <Button onClick={saveData} variant="default" size="sm" className="mx-[10px]">💾</Button>
+                    <Button onClick={saveData} variant="default" size="sm">
+                      💾 Opslaan
+                    </Button>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="destructive" size="sm" className="px-[10px] py-0 mx-[10px]">🔄 </Button>
+                        <Button variant="destructive" size="sm">
+                          🔄 Reset
+                        </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
@@ -738,8 +742,8 @@ const Index = () => {
                                 </Dialog>
                               </div>
                               {viewingCategory?.name === category.name && <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-4 animate-accordion-down">
-                                  {category.words.map((word, idx) => <div key={idx} className="p-3 bg-muted rounded-lg text-sm">
-                                      <div className="font-medium">{word.word}</div>
+                                  {category.words.map((word, idx) => <div key={idx} className="p-3 bg-muted rounded-lg text-sm mx-[100px]">
+                                      <div className="font-medium mx-0">{word.word}</div>
                                       <div className="text-xs text-muted-foreground">
                                         Hint: {word.hint}
                                       </div>
