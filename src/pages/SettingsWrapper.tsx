@@ -7,12 +7,27 @@ import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 
 export const SettingsWrapper = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [themeName, setThemeName] = useState<ThemeName>('default');
+  // Load theme preference from localStorage first
+  const savedData = localStorage.getItem('whoGameData');
+  let initialTheme: 'light' | 'dark' = 'light';
+  let initialThemeName: ThemeName = 'default';
+  
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      if (parsed.settings?.theme) initialTheme = parsed.settings.theme;
+      if (parsed.settings?.themeName) initialThemeName = parsed.settings.themeName;
+    } catch (e) {
+      console.error("Failed to load theme", e);
+    }
+  }
+
+  const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme);
+  const [themeName, setThemeName] = useState<ThemeName>(initialThemeName);
   const [categories, setCategories] = useState<Category[]>(defaultCategories);
   const [settings, setSettings] = useState<GameSettings>({
-    theme: 'light',
-    themeName: 'default',
+    theme: initialTheme,
+    themeName: initialThemeName,
     language: 'nl',
     gameModes: ['normal'],
     randomizeGameModes: false,
@@ -104,6 +119,12 @@ export const SettingsWrapper = () => {
     setSettings(prev => ({ ...prev, themeName: newThemeName }));
   };
 
+  const handleModeToggle = () => {
+    const newMode = theme === 'light' ? 'dark' : 'light';
+    setTheme(newMode);
+    setSettings(prev => ({ ...prev, theme: newMode }));
+  };
+
   return (
     <Settings
       settings={settings}
@@ -114,6 +135,8 @@ export const SettingsWrapper = () => {
       onReset={resetData}
       currentTheme={themeName}
       onThemeChange={handleThemeChange}
+      currentMode={theme}
+      onModeToggle={handleModeToggle}
     />
   );
 };

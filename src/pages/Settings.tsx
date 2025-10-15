@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { ArrowLeft, Save, RotateCcw, Plus, X, Eye } from "lucide-react";
+import { ArrowLeft, Save, RotateCcw, Plus, X, Eye, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 import { Category, GameSettings } from "@/types/game";
 import { ThemeName } from "@/types/theme";
@@ -20,21 +20,22 @@ interface SettingsProps {
   onReset: () => void;
   currentTheme: ThemeName;
   onThemeChange: (theme: ThemeName) => void;
+  currentMode: 'light' | 'dark';
+  onModeToggle: () => void;
 }
 
-const themeNames: { name: ThemeName; label: string; color: string }[] = [
-  { name: 'default', label: 'Default', color: '#8B5CF6' },
-  { name: 'classic', label: 'Classic', color: '#10B981' },
-  { name: 'blue', label: 'Blue', color: '#3B82F6' },
-  { name: 'teal', label: 'Teal', color: '#14B8A6' },
-  { name: 'red', label: 'Red', color: '#EF4444' },
-  { name: 'gray', label: 'Gray', color: '#6B7280' },
-  { name: 'green', label: 'Green', color: '#22C55E' },
-  { name: 'forest', label: 'Forest', color: '#059669' },
-  { name: 'autumn', label: 'Autumn', color: '#F97316' },
-  { name: 'mocha', label: 'Mocha', color: '#92400E' },
-  { name: 'pink', label: 'Pink', color: '#EC4899' },
-  { name: 'noir', label: 'Noir', color: '#1F2937' },
+const themeNames: { name: ThemeName; label: string; colors: string[] }[] = [
+  { name: 'default', label: 'Default', colors: ['#14B8A6', '#06B6D4', '#22D3EE'] },
+  { name: 'classic', label: 'Classic', colors: ['#8B5CF6', '#A78BFA', '#C4B5FD'] },
+  { name: 'grape', label: 'Grape', colors: ['#8B5CF6', '#A78BFA', '#C4B5FD'] },
+  { name: 'spiderman', label: 'Spiderman', colors: ['#3B82F6', '#EF4444', '#DC2626'] },
+  { name: 'ember', label: 'Ember', colors: ['#EF4444', '#DC2626', '#B91C1C'] },
+  { name: 'wolverine', label: 'Wolverine', colors: ['#F59E0B', '#3B82F6', '#1D4ED8'] },
+  { name: 'acid', label: 'Acid', colors: ['#22C55E', '#16A34A', '#15803D'] },
+  { name: 'spark', label: 'Spark', colors: ['#F59E0B', '#FBBF24', '#FCD34D'] },
+  { name: 'hulk', label: 'Hulk', colors: ['#A855F7', '#22C55E', '#16A34A'] },
+  { name: 'popsicle', label: 'Popsicle', colors: ['#06B6D4', '#F59E0B', '#FBBF24'] },
+  { name: 'noir', label: 'Noir', colors: ['#1F2937', '#374151', '#4B5563'] },
 ];
 
 export const Settings = ({ 
@@ -45,7 +46,9 @@ export const Settings = ({
   onSave, 
   onReset,
   currentTheme,
-  onThemeChange 
+  onThemeChange,
+  currentMode,
+  onModeToggle
 }: SettingsProps) => {
   const navigate = useNavigate();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -67,23 +70,33 @@ export const Settings = ({
       <div className="fixed inset-0 pointer-events-none" style={{ background: 'var(--ambient-glow, none)' }} />
       
       <div className="relative z-10 container mx-auto p-6 max-w-4xl">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/')}
+              className="animate-fade-in"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent animate-fade-in">
+              Instellingen
+            </h1>
+          </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            onClick={() => navigate('/')}
-            className="animate-fade-in"
+            onClick={onModeToggle}
+            className="rounded-full animate-fade-in"
           >
-            <ArrowLeft className="h-6 w-6" />
+            {currentMode === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent animate-fade-in">
-            Instellingen
-          </h1>
         </div>
 
         <div className="space-y-6 animate-fade-in">
           {/* Theme Selection */}
-          <div className="bg-card rounded-2xl p-6 shadow-card border border-primary/20">
+          <div className="bg-card rounded-2xl p-6 shadow-card border border-primary/20 animate-fade-in">
             <h2 className="text-2xl font-bold mb-4 text-foreground">Thema's</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {themeNames.map((theme) => (
@@ -98,10 +111,19 @@ export const Settings = ({
                       : "border-border hover:border-primary/50"
                   )}
                 >
-                  <div 
-                    className="w-full h-16 rounded-lg mb-2"
-                    style={{ backgroundColor: theme.color }}
-                  />
+                  <div className="w-full h-20 rounded-lg mb-3 bg-card relative overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex gap-1.5">
+                        {theme.colors.map((color, idx) => (
+                          <div
+                            key={idx}
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-sm font-medium text-foreground">{theme.label}</p>
                   {currentTheme === theme.name && (
                     <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs">
@@ -110,38 +132,6 @@ export const Settings = ({
                   )}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Timer Settings */}
-          <div className="bg-card rounded-2xl p-6 shadow-card border border-primary/20">
-            <h2 className="text-2xl font-bold mb-4 text-foreground">Timer</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="timer-enabled" className="text-base">Timer inschakelen</Label>
-                <Switch
-                  id="timer-enabled"
-                  checked={settings.timerEnabled}
-                  onCheckedChange={(checked) => 
-                    onSettingsChange({ ...settings, timerEnabled: checked })
-                  }
-                />
-              </div>
-              {settings.timerEnabled && (
-                <div className="space-y-2 animate-fade-in">
-                  <Label htmlFor="timer-length">Timer lengte (seconden)</Label>
-                  <Input
-                    id="timer-length"
-                    type="number"
-                    min="30"
-                    max="600"
-                    value={settings.timerLength}
-                    onChange={(e) =>
-                      onSettingsChange({ ...settings, timerLength: parseInt(e.target.value) || 300 })
-                    }
-                  />
-                </div>
-              )}
             </div>
           </div>
 
