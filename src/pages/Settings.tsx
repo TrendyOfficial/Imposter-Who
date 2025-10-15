@@ -284,11 +284,11 @@ export const Settings = ({
           <div className="flex gap-4">
             <Button onClick={onSave} className="flex-1" size="lg">
               <Save className="h-5 w-5 mr-2" />
-              💾 Opslaan
+               Opslaan
             </Button>
             <Button onClick={onReset} variant="destructive" className="flex-1" size="lg">
               <RotateCcw className="h-5 w-5 mr-2" />
-              🔄 Reset
+               Reset
             </Button>
           </div>
         </div>
