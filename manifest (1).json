@@ -1,6 +1,6 @@
 {
   "background_color": "#ffffff",
-  "description": "Lovable Generated Project",
+  "description": "Impostor Game",
   "dir": "ltr",
   "display": "standalone",
   "name": "School: Who?",
@@ -36,7 +36,7 @@
       "is192x192": false
     },
     {
-      "src": "https://school-who.lovable.app/favicon.ico",
+      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/oOVnPGHGKsXTpYg7HJLyCvqN0fr2/uploads/1759416997969-Copilot_20250913_232954.png",
       "type": "image/png",
       "sizes": "73x74",
       "isSquare": false,
