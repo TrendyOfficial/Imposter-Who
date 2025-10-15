@@ -86,7 +86,6 @@ To play **Impostor: Who?** on your mobile device or to export your own:
 ### 🤝 Contributors
 
 👑 **Owner / Developer:** [@TrendyOfficial](https://github.com/TrendyOfficial)
-🎴 **Contributor AI** [@lovable.dev](https://github.com/apps/lovable-dev) - [Lovable Website](https://lovable.dev)
 🧑‍💻 **Contributors:** Open for contributions! Submit a pull request or open an issue.
 
 ---
