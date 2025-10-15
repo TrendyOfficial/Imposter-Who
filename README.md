@@ -61,22 +61,32 @@ Switch between colorful themes such as:
 
 ---
 
+Understood! Here's the updated mobile deployment section for your README, using the correct AppMaker link and focusing on deploying your live website as an APK:
+
+---
+
 ### 📱 Mobile Deployment
 
-To deploy **Impostor: Who?** on your mobile:
+To play **Impostor: Who?** on your mobile device or to export your own:
 
-1. Export your React Native project as a web bundle or APK-compatible project.
-2. Visit [AppMaker.xyz](https://create.appmaker.xyz/)
-3. Upload your project and follow the steps to generate an `.apk` file.
-4. Download the `.apk` to your mobile device and install it.
-5. If you got any questions let me know. [Questions](https://github.com/TrendyOfficial/Imposter-Who/issues)
-> Now you can play your game anywhere, anytime — directly on your phone!
+1. Visit [AppMaker WebApp Builder](https://create.appmaker.xyz/webapp).
+2. Enter your **live website URL** (e.g., `https://school-who.lovable.app/`).
+3. Fill in the app details:
+
+   * **App Name:** `Impostor: Who? 🎭`
+   * **App Icon:** Upload your game icon or banner.
+4. Click **Build APK** and wait for the process to complete.
+5. Download the `.apk` file and install it on your mobile device.
+
+> Now you can enjoy **Impostor: Who?** directly on your phone!
+
 
 ---
 
 ### 🤝 Contributors
 
 👑 **Owner / Developer:** [@TrendyOfficial](https://github.com/TrendyOfficial)
+🎴 **Contributor AI** [@lovable.dev](https://github.com/apps/lovable-dev) - [Lovable Website](https://lovable.dev)
 🧑‍💻 **Contributors:** Open for contributions! Submit a pull request or open an issue.
 
 ---
