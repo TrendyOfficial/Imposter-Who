@@ -61,10 +61,6 @@ Switch between colorful themes such as:
 
 ---
 
-Understood! Here's the updated mobile deployment section for your README, using the correct AppMaker link and focusing on deploying your live website as an APK:
-
----
-
 ### 📱 Mobile Deployment
 
 To play **Impostor: Who?** on your mobile device or to export your own:
