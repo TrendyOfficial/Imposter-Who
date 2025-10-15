@@ -69,7 +69,7 @@ To deploy **Impostor: Who?** on your mobile:
 2. Visit [AppMaker.xyz](https://create.appmaker.xyz/)
 3. Upload your project and follow the steps to generate an `.apk` file.
 4. Download the `.apk` to your mobile device and install it.
-    **If you got any questions let me know. [Questions](https://github.com/TrendyOfficial/Imposter-Who/issues) **
+**If you got any questions let me know. [Questions](https://github.com/TrendyOfficial/Imposter-Who/issues)**
 > Now you can play your game anywhere, anytime — directly on your phone!
 
 ---
