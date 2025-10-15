@@ -29,6 +29,7 @@ export const SettingsWrapper = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme);
   const [themeName, setThemeName] = useState<ThemeName>(initialThemeName);
   const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [themeAdaptation, setThemeAdaptation] = useState<boolean>(false);
   const [settings, setSettings] = useState<GameSettings>({
     theme: initialTheme,
     themeName: initialThemeName,
@@ -52,10 +53,15 @@ export const SettingsWrapper = () => {
         const parsed = JSON.parse(savedData);
         if (parsed.categories) setCategories(parsed.categories);
         if (parsed.settings) {
-          setSettings(parsed.settings);
+          // Validate and apply theme name
+          const validThemes: ThemeName[] = ['default', 'classic', 'grape', 'spiderman', 'ember', 'wolverine', 'acid', 'spark', 'hulk', 'popsicle', 'noir', 'blue', 'teal', 'red', 'gray', 'green', 'forest', 'autumn', 'mocha', 'pink'];
+          const validThemeName = validThemes.includes(parsed.settings.themeName) ? parsed.settings.themeName : 'default';
+          
+          setSettings({...parsed.settings, themeName: validThemeName});
           if (parsed.settings.theme) setTheme(parsed.settings.theme);
-          if (parsed.settings.themeName) setThemeName(parsed.settings.themeName);
+          setThemeName(validThemeName);
         }
+        if (parsed.themeAdaptation !== undefined) setThemeAdaptation(parsed.themeAdaptation);
       } catch (e) {
         console.error("Failed to load saved data", e);
       }
@@ -77,6 +83,7 @@ export const SettingsWrapper = () => {
       ...existingData,
       categories,
       settings: { ...settings, theme, themeName },
+      themeAdaptation,
     };
     localStorage.setItem('whoGameData', JSON.stringify(dataToSave));
     toast.success("Gegevens opgeslagen!");
@@ -141,6 +148,8 @@ export const SettingsWrapper = () => {
       onThemeChange={handleThemeChange}
       currentMode={theme}
       onModeToggle={handleModeToggle}
+      themeAdaptation={themeAdaptation}
+      onThemeAdaptationChange={setThemeAdaptation}
     />
   );
 };

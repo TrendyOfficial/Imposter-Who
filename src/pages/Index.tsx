@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ThemeName } from "@/types/theme";
 import { useTheme } from "@/hooks/useTheme";
+import { useThemeAdaptation } from "@/hooks/useThemeAdaptation";
 import { useNavigate } from "react-router-dom";
 const HINT_PASSWORD = "8813";
 const gameModeLabels: Record<GameMode, string> = {
@@ -77,6 +78,9 @@ const Index = () => {
   const [categories, setCategories] = useState<Category[]>(defaultCategories);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [themeAdaptation, setThemeAdaptation] = useState(false);
 
   // Load saved data from localStorage
   useEffect(() => {
@@ -87,13 +91,15 @@ const Index = () => {
         if (parsed.players) setPlayers(parsed.players);
         if (parsed.categories) setCategories(parsed.categories);
         if (parsed.settings) {
-          setSettings(parsed.settings);
           // Validate theme name exists
-          const validThemes: ThemeName[] = ['default', 'classic', 'grape', 'spiderman', 'ember', 'wolverine', 'acid', 'spark', 'hulk', 'popsicle', 'noir'];
+          const validThemes: ThemeName[] = ['default', 'classic', 'grape', 'spiderman', 'ember', 'wolverine', 'acid', 'spark', 'hulk', 'popsicle', 'noir', 'blue', 'teal', 'red', 'gray', 'green', 'forest', 'autumn', 'mocha', 'pink'];
           const validThemeName = validThemes.includes(parsed.settings.themeName) ? parsed.settings.themeName : 'default';
+          setSettings({...parsed.settings, themeName: validThemeName});
           setThemeName(validThemeName);
+          if (parsed.settings.theme) setTheme(parsed.settings.theme);
         }
         if (parsed.selectedCategories) setSelectedCategories(parsed.selectedCategories);
+        if (parsed.themeAdaptation !== undefined) setThemeAdaptation(parsed.themeAdaptation);
         toast.success("Opgeslagen gegevens geladen!");
       } catch (e) {
         console.error("Failed to load saved data", e);
@@ -117,6 +123,24 @@ const Index = () => {
       return () => clearInterval(interval);
     }
   }, [gameState.phase, settings.timerEnabled, timerSeconds]);
+
+  // Scroll detection for Start button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+        const isBottom = scrollTop + clientHeight >= scrollHeight - 50;
+        setIsAtBottom(isBottom);
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      handleScroll(); // Initial check
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [gameState.phase]);
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -124,8 +148,9 @@ const Index = () => {
     const dataToSave = {
       players,
       categories,
-      settings,
-      selectedCategories
+      settings: { ...settings, theme, themeName },
+      selectedCategories,
+      themeAdaptation
     };
     localStorage.setItem('whoGameData', JSON.stringify(dataToSave));
     toast.success("Gegevens opgeslagen!");
@@ -160,6 +185,7 @@ const Index = () => {
     });
     setThemeName('default');
     setTheme('light');
+    setThemeAdaptation(false);
     toast.success("Gegevens gereset!");
   };
   // Track deleted player numbers
@@ -435,20 +461,36 @@ const Index = () => {
       background: 'var(--ambient-glow, none)'
     }} />
       
-      <div className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
+      <div ref={containerRef} className="container max-w-6xl mx-auto px-4 py-4 md:py-8 relative z-10 overflow-y-auto h-screen">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 animate-fade-in">
-          <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent transition-all duration-300">
-            <span className="bg-gradient-primary bg-clip-text text-transparent">Who?</span> <span style={{ 
+          <h1 className="text-4xl md:text-5xl font-bold transition-all duration-300">
+            <span style={{ 
+              background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>Who?</span>{' '}
+            <span style={{ 
               background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>🎭</span>
           </h1>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate('/settings')} className="rounded-full">
-              <SettingsIcon className="h-5 w-5" />
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => navigate('/settings')} 
+              className="rounded-full transition-all duration-300 hover:border-primary hover:bg-primary/10"
+              style={{
+                '--tw-border-opacity': '1',
+              } as React.CSSProperties}
+            >
+              <SettingsIcon className="h-5 w-5" style={{
+                color: 'hsl(var(--primary))'
+              }} />
             </Button>
             <Button variant="outline" size="icon" onClick={toggleTheme} className="rounded-full">
               {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -478,10 +520,10 @@ const Index = () => {
         {/* Lobby Phase */}
         {gameState.phase === 'lobby' && <div className="space-y-8 animate-fade-in">
             {/* Settings */}
-            <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <SettingsIcon className="h-6 w-6" />
+            <div className="bg-card rounded-2xl shadow-card p-4 md:p-6 border border-border">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+                  <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                    <SettingsIcon className="h-5 w-5 md:h-6 md:w-6" />
                     Instellingen
                   </h2>
                   <div className="flex gap-2">
@@ -568,15 +610,15 @@ const Index = () => {
             </div>
 
             {/* Players */}
-            <div className="bg-card rounded-2xl shadow-card p-6 border border-border">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">👥 Spelers ({players.length})</h2>
+            <div className="bg-card rounded-2xl shadow-card p-4 md:p-6 border border-border">
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+                <h2 className="text-xl md:text-2xl font-bold">👥 Spelers ({players.length})</h2>
                 <div className="flex gap-2">
-                  <Button onClick={randomizePlayers} size="sm" variant="outline" className="rounded-full">
+                  <Button onClick={randomizePlayers} size="sm" variant="outline" className="rounded-full text-xs md:text-sm">
                     🔀 Randomize
                   </Button>
-                  <Button onClick={addPlayer} size="sm" className="rounded-full">
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={addPlayer} size="sm" className="rounded-full text-xs md:text-sm">
+                    <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                     Toevoegen
                   </Button>
                 </div>
@@ -649,10 +691,10 @@ const Index = () => {
             </div>
 
             {/* Categories */}
-            <div className="bg-card rounded-2xl shadow-card p-6 border border-border max-h-[500px] flex flex-col">
-              <div className="flex items-center justify-between mb-6 flex-shrink-0">
-                <h2 className="text-2xl font-bold">📂 Categorieën</h2>
-                <Button onClick={randomizeCategories} variant="outline" size="sm" className="rounded-full">
+            <div className="bg-card rounded-2xl shadow-card p-4 md:p-6 border border-border max-h-[500px] flex flex-col">
+              <div className="flex items-center justify-between mb-6 flex-shrink-0 flex-wrap gap-2">
+                <h2 className="text-xl md:text-2xl font-bold">📂 Categorieën</h2>
+                <Button onClick={randomizeCategories} variant="outline" size="sm" className="rounded-full text-xs md:text-sm">
                   🔀 Randomize
                 </Button>
               </div>
@@ -665,11 +707,16 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="group sticky bottom-0 pt-4 bg-gradient-bg">
+            <div className="sticky bottom-0 pt-4 bg-gradient-bg pb-4">
               <Button 
                 onClick={startGame} 
                 size="lg" 
-                className="w-full text-lg h-14 rounded-2xl shadow-lg transition-all duration-300 group-hover:h-12 group-hover:text-base"
+                className={cn(
+                  "w-full rounded-2xl shadow-lg transition-all duration-300",
+                  isAtBottom 
+                    ? "text-base md:text-lg h-12 md:h-14" 
+                    : "text-sm md:text-base h-10 md:h-12 hover:h-12 hover:text-base md:hover:h-14 md:hover:text-lg"
+                )}
               >
                 🎮 Start Spel
               </Button>

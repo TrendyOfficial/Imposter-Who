@@ -22,12 +22,14 @@ interface SettingsProps {
   onThemeChange: (theme: ThemeName) => void;
   currentMode: 'light' | 'dark';
   onModeToggle: () => void;
+  themeAdaptation: boolean;
+  onThemeAdaptationChange: (enabled: boolean) => void;
 }
 
 const themeNames: { name: ThemeName; label: string; colors: string[] }[] = [
   { name: 'default', label: 'Default', colors: ['#14B8A6', '#06B6D4', '#22D3EE'] },
   { name: 'classic', label: 'Classic', colors: ['#8B5CF6', '#A78BFA', '#C4B5FD'] },
-  { name: 'grape', label: 'Grape', colors: ['#8B5CF6', '#A78BFA', '#C4B5FD'] },
+  { name: 'grape', label: 'Grape', colors: ['#A855F7', '#C084FC', '#D8B4FE'] },
   { name: 'spiderman', label: 'Spiderman', colors: ['#3B82F6', '#EF4444', '#DC2626'] },
   { name: 'ember', label: 'Ember', colors: ['#EF4444', '#DC2626', '#B91C1C'] },
   { name: 'wolverine', label: 'Wolverine', colors: ['#F59E0B', '#3B82F6', '#1D4ED8'] },
@@ -36,6 +38,15 @@ const themeNames: { name: ThemeName; label: string; colors: string[] }[] = [
   { name: 'hulk', label: 'Hulk', colors: ['#A855F7', '#22C55E', '#16A34A'] },
   { name: 'popsicle', label: 'Popsicle', colors: ['#06B6D4', '#F59E0B', '#FBBF24'] },
   { name: 'noir', label: 'Noir', colors: ['#1F2937', '#374151', '#4B5563'] },
+  { name: 'blue', label: 'Blue', colors: ['#3B82F6', '#60A5FA', '#93C5FD'] },
+  { name: 'teal', label: 'Teal', colors: ['#14B8A6', '#2DD4BF', '#5EEAD4'] },
+  { name: 'red', label: 'Red', colors: ['#EF4444', '#F87171', '#FCA5A5'] },
+  { name: 'gray', label: 'Gray', colors: ['#6B7280', '#9CA3AF', '#D1D5DB'] },
+  { name: 'green', label: 'Green', colors: ['#22C55E', '#4ADE80', '#86EFAC'] },
+  { name: 'forest', label: 'Forest', colors: ['#059669', '#10B981', '#34D399'] },
+  { name: 'autumn', label: 'Autumn', colors: ['#F97316', '#FB923C', '#FDBA74'] },
+  { name: 'mocha', label: 'Mocha', colors: ['#92400E', '#B45309', '#D97706'] },
+  { name: 'pink', label: 'Pink', colors: ['#EC4899', '#F472B6', '#F9A8D4'] },
 ];
 
 export const Settings = ({ 
@@ -48,7 +59,9 @@ export const Settings = ({
   currentTheme,
   onThemeChange,
   currentMode,
-  onModeToggle
+  onModeToggle,
+  themeAdaptation,
+  onThemeAdaptationChange
 }: SettingsProps) => {
   const navigate = useNavigate();
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -97,7 +110,17 @@ export const Settings = ({
         <div className="space-y-6 animate-fade-in">
           {/* Theme Selection */}
           <div className="bg-card rounded-2xl p-6 shadow-card border border-primary/20 animate-fade-in">
-            <h2 className="text-2xl font-bold mb-4 text-foreground">Thema's</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-foreground">Thema's</h2>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="theme-adaptation" className="text-sm">Thema-adaptieve knoppen</Label>
+                <Switch
+                  id="theme-adaptation"
+                  checked={themeAdaptation}
+                  onCheckedChange={onThemeAdaptationChange}
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {themeNames.map((theme) => (
                 <button
