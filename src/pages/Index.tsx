@@ -843,10 +843,10 @@ const Index = () => {
 
                 <div className="flex gap-4">
                 <Button onClick={resetGame} variant="outline" size="lg" className="flex-1 text-lg h-14 rounded-2xl">
-                  🏠 Terug naar Lobby
+                  🏠 Lobby
                 </Button>
                 <Button onClick={startGame} size="lg" className="flex-1 text-lg h-14 rounded-2xl">
-                  🔄 Nieuwe Ronde
+                  🆕 Ronde
                 </Button>
               </div>
             </div>
