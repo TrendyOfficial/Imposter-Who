@@ -831,9 +831,9 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4 mx-[10px] px-[111px]">
-                <Button onClick={resetGame} variant="outline" size="lg" className="flex-1 h-14 rounded-2xl text-lg font-semibold">🏠 Lobby</Button>
-                <Button onClick={startGame} size="lg" className="flex-1 text-lg h-14 rounded-2xl">Nieuwe Ronde</Button>
+              <div className="flex gap-4 mx-0 px-0">
+                <Button onClick={resetGame} variant="outline" size="lg" className="flex-1 h-14 rounded-2xl text-lg font-semibold px-0 mx-0">🏠 Lobby</Button>
+                <Button onClick={startGame} size="lg" className="flex-1 text-lg h-14 rounded-2xl px-0 mx-0">Nieuwe Ronde</Button>
               </div>
             </div>
           </div>}
