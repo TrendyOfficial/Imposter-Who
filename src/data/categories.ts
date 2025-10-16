@@ -1,3 +1,5 @@
+// Add your own words simply by or making an new category or putting  { word: "Example1", hint: "Example2" }, in an category.
+
 import { Category } from "@/types/game";
 
 export const defaultCategories: Category[] = [
@@ -589,15 +591,7 @@ export const defaultCategories: Category[] = [
     name: "👻 Speciale Categorie",
     emoji: "👻",
     words: [
-      { word: "67", hint: "Basketbal" },
-      { word: "69", hint: "Nummers" },
-      { word: "21", hint: "2015" },
-      { word: "W Speed", hint: "Celebrity" },
-      { word: "Libanon Lyceum", hint: "School" },
-      { word: "Pipsqueak", hint: "Ontboeiend" },
-      { word: "Pikki Pikki bam bam", hint: "Bril" },
-      { word: "Toothpick", hint: "Badkamer" },
-      { word: "Gooning", hint: "Transparent" }
+      { word: "Word", hint: "Hint" }
     ],
     isDefault: false,
   }
