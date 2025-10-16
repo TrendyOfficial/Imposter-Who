@@ -97,8 +97,8 @@ Feel free to modify, share, or expand the project — just credit the original c
 ### 🚀 Links
 
 * 🌍 [Live App](https://school-who.lovable.app/)
-* 💾 [GitHub Repository](https://github.com/TrendyOfficial/School-Who-)
-* 💬 [Report a Bug](https://github.com/TrendyOfficial/School-Who-/issues)
+* 💾 [GitHub Repository](https://github.com/TrendyOfficial/Imposter-Who)
+* 💬 [Report a Bug](https://github.com/TrendyOfficial/Imposter-Who/issues)
 
 ---
 
