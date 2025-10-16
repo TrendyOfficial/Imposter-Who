@@ -4,7 +4,7 @@ import { Category } from "@/types/game";
 
 export const defaultCategories: Category[] = [
   {
-    name: "🍕 Eten & drinken",
+    name: " Eten & drinken",
     emoji: "🍕",
     words: [
       { word: "Pizza", hint: "Rond" },
@@ -52,7 +52,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🌍 Landen & steden",
+    name: " Landen & steden",
     emoji: "🌍",
     words: [
       { word: "Nederland", hint: "Oranje" },
@@ -89,7 +89,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "⭐ Beroemdheden",
+    name: " Beroemdheden",
     emoji: "⭐",
     words: [
       { word: "Lionel Messi", hint: "Voetballer" },
@@ -126,7 +126,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🎮 Games & consoles",
+    name: " Games & consoles",
     emoji: "🎮",
     words: [
       { word: "Minecraft", hint: "Blokjes" },
@@ -163,7 +163,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "⚽ Sport & teams",
+    name: " Sport & teams",
     emoji: "⚽",
     words: [
       { word: "Ajax", hint: "Amsterdam" },
@@ -200,7 +200,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🎬 Films & series",
+    name: " Films & series",
     emoji: "🎬",
     words: [
       { word: "Avengers", hint: "Helden" },
@@ -237,7 +237,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🐶 Dieren",
+    name: " Dieren",
     emoji: "🐶",
     words: [
       { word: "Hond", hint: "Vriend" },
@@ -287,7 +287,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "📱 Objecten",
+    name: " Objecten",
     emoji: "📱",
     words: [
       { word: "Telefoon", hint: "Bellen" },
@@ -324,7 +324,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "👟 Merken",
+    name: " Merken",
     emoji: "👟",
     words: [
       { word: "Nike", hint: "Sport" },
@@ -378,7 +378,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🎨 Hobbys",
+    name: " Hobbys",
     emoji: "🎨",
     words: [
       { word: "Lezen", hint: "Boeken" },
@@ -421,7 +421,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🏃 Activiteiten",
+    name: " Activiteiten",
     emoji: "🏃",
     words: [
       { word: "Zwemmen", hint: "Water" },
@@ -464,7 +464,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🎭 Memes & Humor",
+    name: " Memes & Humor",
     emoji: "🎭",
     words: [
       { word: "Grappenmaker", hint: "Lachen" },
@@ -513,7 +513,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🧩 Puzzels & Breinspel",
+    name: " Puzzels & Breinspel",
     emoji: "🧩",
     words: [
       { word: "Sudoku", hint: "Getallen" },
@@ -550,7 +550,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "🌌 Science & Space",
+    name: " Science & Space",
     emoji: "🌌",
     words: [
       { word: "Neutron", hint: "Kern" },
@@ -588,7 +588,7 @@ export const defaultCategories: Category[] = [
     isDefault: true,
   },
   {
-    name: "👻 Speciale Categorie",
+    name: " Speciale Categorie",
     emoji: "👻",
     words: [
       { word: "Word", hint: "Hint" }
