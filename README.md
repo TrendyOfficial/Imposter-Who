@@ -1,6 +1,6 @@
 
 
-# 🎭 Impostor: Who?
+# 🎭 Imposter: Who?
 
 ![Game Banner](https://img.shields.io/badge/Impostor%20Who%3F-Free%20to%20Play-blueviolet?style=for-the-badge)
 ![Version](https://img.shields.io/badge/version-1.0.0-ff69b4?style=for-the-badge)
